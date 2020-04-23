@@ -12,6 +12,14 @@ from keras import layers
 from keras import models
 from keras.utils import to_categorical
 
+
+def model_no_max_pool():
+    model = models.Sequential()
+    model.add(layers.Conv2D(32,(3,3),activation='relu',input_shape=(28,28,1)))
+    model.add(layers.Conv2D(64,(3,3),activation='relu'))
+    model.add(layers.Conv2D(64,(32,32),activation='relu'))
+
+
 def conv_model():
     model = models.Sequential()
     model.add(layers.Conv2D(32,(3,3),activation='relu',input_shape=(28,28,1)))
