@@ -10,6 +10,7 @@
 
 from keras import models
 from keras import layers
+from keras.utils import plot_model
 
 def vgg16(weights_path=None):
     model = models.Sequential()
@@ -52,9 +53,11 @@ def vgg16(weights_path=None):
 weight_path = r"C:\Users\123\.keras\datasets\vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5"
 
 model = vgg16(weight_path)
-print(model.summary())
+# print(model.summary())
+#
+# weight_con2d_2,bias_con2d_2 = model.get_layer('conv2d_2').get_weights()
+#
+# print(weight_con2d_2.shape)
+# print(bias_con2d_2.shape)
 
-weight_con2d_2,bias_con2d_2 = model.get_layer('conv2d_2').get_weights()
-
-print(weight_con2d_2.shape)
-print(bias_con2d_2.shape)
+plot_model(model,"vgg16.png")
