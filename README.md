@@ -1,2 +1,2 @@
 # overview
-记录关于keras和tensorflow的学习
+记录keras和tensorflow的基本使用方法
