@@ -28,27 +28,39 @@ def inception_v1(input,size):
     ly_11 = layers.Conv2D(conv11, (1, 1), strides=1, activation='relu')(input)
 
     ly_3 = layers.Conv2D(conv31, (1, 1), strides=1, activation='relu')(input)
-    ly_3 = layers.Conv2D(conv32, (3, 3), strides=1, activation='relu')(ly_3)
+    ly_3 = layers.Conv2D(conv32, (3, 3), strides=1,padding='same',activation='relu')(ly_3)
 
     ly_5 = layers.Conv2D(conv51, (1, 1), strides=1, activation='relu')(input)
     ly_5 = layers.Conv2D(conv52, (5, 5), strides=1, padding='same', activation='relu')(ly_5)
 
-    proj = layers.MaxPooling2D((3, 3), strides=1, padding='same', activation='relu')(input)
+    proj = layers.MaxPooling2D((3, 3), strides=1, padding='same')(input)
     proj = layers.Conv2D(proj11, (1, 1), strides=1, activation='relu')(proj)
 
     out = layers.concatenate([ly_11, ly_3, ly_5, proj],axis=-1)
 
+    return out
+
+#局部分类网络
+def exact_structure_part(input):
+
+    o=layers.AveragePooling2D((5,5),strides=3,padding='valid')(input)
+    o=layers.Conv2D(128,(1,1),strides=1,padding='same',activation='relu',kernel_initializer='he_normal')(o)
+    o=layers.Flatten()(o)
+    o=layers.Dropout(0.3)(o)
+    o=layers.Dense(1000,activation='softmax')(o)
+
+    return o
 
 input = Input(shape=(224,224,3))
 
 # #第一层
 ly1 = layers.Conv2D(64,(7,7),strides=2,padding='same',activation='relu',)(input)
-ly1 = layers.MaxPooling2D(64,(3,3),strides=2,padding='same',activatation='relu')(ly1)
+ly1 = layers.MaxPooling2D((3,3),strides=2,padding='same')(ly1)
 #
 # #第二层
-ly2 = layers.Conv2D(64,(1,1),activation='relu')(ly1)
+ly2 = layers.Conv2D(64,(1,1),padding='same',activation='relu')(ly1)
 ly2 = layers.Conv2D(192,(3,3),strides=1,padding='same',activation='relu')(ly2)
-ly2 = layers.MaxPooling2D(192,(3,3),strides=2,padding='same',activation='relu')(ly2)
+ly2 = layers.MaxPooling2D((3,3),strides=2,padding='same')(ly2)
 
 # #第三层
 # #3a层
@@ -58,7 +70,7 @@ ly3a = inception_v1(ly2,ly3a_size)
 ly3b_size = [128,128,192,32,96,64]
 ly3b=inception_v1(ly3a,ly3b_size)
 
-ly3_pool = layers.MaxPooling2D((3,3),strides=2,padding='same',activation='relu')(ly3b)
+ly3_pool = layers.MaxPooling2D((3,3),strides=2,padding='same')(ly3b)
 
 #第4层
 #4a
@@ -77,7 +89,7 @@ ly4d=inception_v1(ly4c,ly4d_size)
 ly4e_size =[256,160,320,32,128,128]
 ly4e =inception_v1(ly4d,ly4e_size)
 
-ly4_pool = layers.MaxPooling2D((3,3),strides=2,padding='same',activation='relu')(ly4e)
+ly4_pool = layers.MaxPooling2D((3,3),strides=2,padding='same')(ly4e)
 
 #第5层
 #5a
@@ -88,30 +100,23 @@ ly5b_size =[384,192,384,48,128,128]
 ly5b=inception_v1(ly5a,ly5b_size)
 
 #第六层
-ly6_pool = layers.AveragePooling2D((7,7),strides=1,padding='same',activation='relu')(ly5b)
+ly6_pool = layers.AveragePooling2D((7,7),strides=1,padding='same')(ly5b)
 flat = layers.Flatten()(ly6_pool)
 ly6_pool=layers.Dropout(0.4)(ly6_pool)
-
 ly6_fc = layers.Dense(1000,activation='softmax')(ly6_pool)
-
-#局部分类网络
-def exact_structure_part(input):
-
-    o=layers.AveragePooling2D((5,5),strides=3,padding='valid',activation='relu')(input)
-    o=layers.Conv2D(128,(1,1),strides=1,activation='liner')(o)
-    o=layers.Dense(1024,activation='liner')(o)
-    o=layers.Dropout(0.7)(o)
-    o=layers.Dense(1000,activation='softmax')(o)
-
-    return o
 
 exact_structure_out1 = exact_structure_part(ly4a)
 exact_structure_out2 = exact_structure_part(ly4d)
 
 inception_model = Model(input,[ly6_fc,exact_structure_out1,exact_structure_out2])
 
-inception_model.compile(optimizer='rmsprop',loss='categorical_crossentropy',metrics=['accuracy'],
-                        loss_weights=[0.6,0.2,0.2])
+print(inception_model.summary())
+# inception_model.compile(optimizer='rmsprop',loss='categorical_crossentropy',metrics=['accuracy'],
+#                         loss_weights=[0.6,0.2,0.2])
+
+
+#数据准备
+
 
 
 
